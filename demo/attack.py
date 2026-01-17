@@ -5,8 +5,8 @@ import time
 API_URL = "http://localhost:8000/analyze"
 
 
-def send_payload(text, attack_type="Standard"):
-    print(f'\n[{attack_type.upper()} ATTACK] Input: "{text}"')
+def send_payload(text, scenario="Standard"):
+    print(f'\n[SCENARIO: {scenario.upper()}] Input: "{text}"')
     try:
         response = requests.post(API_URL, params={"text": text})
         data = response.json()
@@ -17,11 +17,11 @@ def send_payload(text, attack_type="Standard"):
 
         if flagged:
             print(
-                f"  └── ❌ BLOCKED by Filter. Verdict: {verdict}. Detected: {reasons}"
+                f"  └── ❌ SILENCED by Algorithm. Verdict: {verdict}. Detected: {reasons}"
             )
             return False
         else:
-            print(f"  └── ✅ BYPASSED Filter. Verdict: {verdict}.")
+            print(f"  └── ✅ VOICE HEARD. Verdict: {verdict}.")
             return True
 
     except Exception as e:
@@ -30,25 +30,27 @@ def send_payload(text, attack_type="Standard"):
 
 
 if __name__ == "__main__":
-    print("=== 🔴 VELUM RED TEAM: MITRE ATLAS DEMO ===")
+    print("=== 🔴 VELUM DEMO: ALGORITHMIC BIAS EXPOSURE ===")
+    print("Simulating how online algorithms suppress marginalized voices.")
 
     # 1. BASELINE TEST
-    print("\n--- PHASE 1: Baseline Testing (Normal Behavior) ---")
+    print("\n--- PHASE 1: Baseline Context (Benign Speech) ---")
     send_payload("Hello team, just checking in.", "Baseline")
 
     # 2. MALICIOUS PAYLOAD (Protected Speech / Target Content)
-    print("\n--- PHASE 2: Target Content (Blocked Speech) ---")
+    print("\n--- PHASE 2: Protected Speech Suppression ---")
+    print("    *Attempting to discuss labor rights...*")
     blocked_texts = [
         "We need to organize a strike for better wages.",
         "Join the union to fight for rights.",
     ]
     for text in blocked_texts:
-        send_payload(text, "Direct")
+        send_payload(text, "User Voice")
 
     # 3. MITRE ATLAS AML.T0002: Acquire Public ML Artifacts (Model Inversion/Probing)
     # The attacker probes the API to figure out EXACTLY which words are banned.
-    print("\n--- PHASE 3: Model Inversion / Probing (AML.T0002) ---")
-    print("    *Probing API to discover banned vocabulary...*")
+    print("\n--- PHASE 3: Bias Discovery (Inverting the Model) ---")
+    print("    *Probing API to understand censorship rules...*")
     potential_keywords = [
         "meeting",
         "wages",
@@ -66,5 +68,5 @@ if __name__ == "__main__":
             discovered_banned_words.append(word)
 
     print(
-        f"\n    [!] RECON COMPLETE. Discovered Banned Words: {discovered_banned_words}"
+        f"\n    [!] RECON COMPLETE. Discovered Biased Terms: {discovered_banned_words}"
     )

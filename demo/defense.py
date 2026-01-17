@@ -3,8 +3,8 @@ import json
 
 API_URL = "http://localhost:8000/analyze"
 
-# Known banned terms (discovered via Model Inversion/Probing)
-# Mapped to "safe" synonyms (Adversarial Perturbations)
+# Known banned terms (discovered via Bias Discovery/Probing)
+# Mapped to "Contextual Reformulations" (Adversarial Perturbations)
 EVASION_MAP = {
     "union": "association",
     "strike": "work stoppage",
@@ -27,8 +27,8 @@ def analyze_and_evade(text):
 
     print(f"  └── ⚠️  FLAGGED. Reasons: {data['flagged_reasons']}")
 
-    # 2. Apply Adversarial Evasion (AML.T0015)
-    # Replacing triggered tokens with semantic equivalents that bypass the boolean/keyword filter.
+    # 2. Apply "Resistance" (Adversarial Evasion / AML.T0015)
+    # Replacing triggered tokens with semantic equivalents to bypass the bias.
     corrected_text = text.lower()
     for bad_word, replacement in EVASION_MAP.items():
         if bad_word in corrected_text:
@@ -37,21 +37,21 @@ def analyze_and_evade(text):
     # Simple capitalization fix
     corrected_text = corrected_text.capitalize()
 
-    print(f"  └── 🛡️  GENERATING EVASION PAYLOAD...")
-    print(f'      Old: "{text}"')
-    print(f'      New: "{corrected_text}"')
+    print(f"  └── 🛡️  RECLAIMING VOICE...")
+    print(f'      Old: "{text}" (Silenced)')
+    print(f'      New: "{corrected_text}" (Heard)')
 
     # 3. Verify Evasion
     retry = requests.post(API_URL, params={"text": corrected_text})
     if not retry.json()["would_be_flagged"]:
-        print("  └── ✅ EVASION SUCCESSFUL. Content posted.")
+        print("  └── ✅ RESISTANCE SUCCESSFUL. Voice Heard.")
     else:
-        print("  └── ❌ EVASION FAILED.")
+        print("  └── ❌ Still Silenced.")
 
 
 if __name__ == "__main__":
-    print("=== 🟢 VELUM DEFENSE: CENSORSHIP EVASION TOOL ===")
-    print("Technique: AML.T0015 (Evading ML Model)")
+    print("=== 🟢 VELUM DEFENSE: ALGORITHMIC RESISTANCE TOOL ===")
+    print("Technique: AML.T0015 (Evading ML Model) for Ethical Resistance")
 
     drafts = [
         "We need to organize a strike tomorrow.",
