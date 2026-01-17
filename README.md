@@ -8,7 +8,7 @@
 > 4.  **Moderation Model (Data Store)**: A keyword-based ML model that checks for banned terms (e.g., "union", "strike").
 >
 > **Data Flow:**
-> User -> Frontend: Submits Text
+> User -> Frontend: Submits Text    
 > Frontend -> Velum API: POST /analyze
 > Velum API -> Moderation Model: Check Content
 > Moderation Model -> Velum API: Return Verdict
