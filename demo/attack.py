@@ -1,72 +1,135 @@
 import requests
 import json
-import time
 
 API_URL = "http://localhost:8000/analyze"
 
 
-def send_payload(text, scenario="Standard"):
-    print(f'\n[SCENARIO: {scenario.upper()}] Input: "{text}"')
+def test_post(text, context, expected_outcome="ALLOWED"):
     try:
         response = requests.post(API_URL, params={"text": text})
         data = response.json()
 
-        verdict = data.get("platform_verdict", "UNKNOWN")
         flagged = data.get("would_be_flagged", False)
         reasons = data.get("flagged_reasons", [])
+        actual = "BLOCKED" if flagged else "ALLOWED"
 
-        if flagged:
-            print(
-                f"  └── ❌ SILENCED by Algorithm. Verdict: {verdict}. Detected: {reasons}"
-            )
-            return False
-        else:
-            print(f"  └── ✅ VOICE HEARD. Verdict: {verdict}.")
-            return True
+        # Determine if this is a false positive
+        is_false_positive = expected_outcome == "ALLOWED" and flagged
+        fp_marker = "⚠️ FALSE POSITIVE" if is_false_positive else ""
 
+        print(f"\n[{context.upper()}]")
+        print(f'  Input: "{text}"')
+        print(f"  Expected: {expected_outcome} | Actual: {actual} {fp_marker}")
+        if reasons:
+            print(f"  Triggers: {reasons}")
+
+        return is_false_positive
     except Exception as e:
-        print(f"  └── ⚠️ API Error: {e}")
-        return None
+        print(f"  Error: {e}")
+        return False
 
 
 if __name__ == "__main__":
-    print("=== 🔴 VELUM DEMO: ALGORITHMIC BIAS EXPOSURE ===")
-    print("Simulating how online algorithms suppress marginalized voices.")
+    print("=" * 60)
+    print("🔴 VELUM RED TEAM: FALSE POSITIVE AUDIT")
+    print("=" * 60)
+    print("\nGoal: Identify LEGITIMATE content incorrectly blocked.\n")
 
-    # 1. BASELINE TEST
-    print("\n--- PHASE 1: Baseline Context (Benign Speech) ---")
-    send_payload("Hello team, just checking in.", "Baseline")
+    false_positive_count = 0
 
-    # 2. MALICIOUS PAYLOAD (Protected Speech / Target Content)
-    print("\n--- PHASE 2: Protected Speech Suppression ---")
-    print("    *Attempting to discuss labor rights...*")
-    blocked_texts = [
-        "We need to organize a strike for better wages.",
-        "Join the union to fight for rights.",
+    # CATEGORY 1: Labor Rights (Core Use Case)
+    print("\n--- CATEGORY 1: LABOR RIGHTS ---")
+    print("Context: Protected speech about worker organization\n")
+
+    tests = [
+        ("We need to organize a strike for better wages.", "Labor Organizing"),
+        ("Join the union to fight for fair treatment.", "Union Advocacy"),
+        ("Workers demand higher wages and safer conditions.", "Worker Demands"),
+        ("The right to organize is fundamental to democracy.", "Rights Discussion"),
     ]
-    for text in blocked_texts:
-        send_payload(text, "User Voice")
+    for text, ctx in tests:
+        if test_post(text, ctx):
+            false_positive_count += 1
 
-    # 3. MITRE ATLAS AML.T0002: Acquire Public ML Artifacts (Model Inversion/Probing)
-    # The attacker probes the API to figure out EXACTLY which words are banned.
-    print("\n--- PHASE 3: Bias Discovery (Inverting the Model) ---")
-    print("    *Probing API to understand censorship rules...*")
-    potential_keywords = [
-        "meeting",
-        "wages",
-        "salary",
-        "union",
-        "association",
-        "strike",
-        "holiday",
+    # CATEGORY 2: Academic/Educational Context
+    print("\n--- CATEGORY 2: ACADEMIC CONTEXT ---")
+    print("Context: Educational discussion about labor history\n")
+
+    tests = [
+        ("The 1936 strike was a pivotal moment in labor history.", "History Lesson"),
+        ("Students should study how unions shaped worker rights.", "Education"),
+        (
+            "The professor discussed wage inequality in her economics class.",
+            "Economics Class",
+        ),
     ]
+    for text, ctx in tests:
+        if test_post(text, ctx):
+            false_positive_count += 1
 
-    discovered_banned_words = []
-    for word in potential_keywords:
-        success = send_payload(f"Let's discuss {word}", "Probe")
-        if not success:  # If blocked
-            discovered_banned_words.append(word)
+    # CATEGORY 3: News/Journalism
+    print("\n--- CATEGORY 3: NEWS/JOURNALISM ---")
+    print("Context: Reporting on current events\n")
 
-    print(
-        f"\n    [!] RECON COMPLETE. Discovered Biased Terms: {discovered_banned_words}"
-    )
+    tests = [
+        ("Breaking: Amazon workers vote to form first union.", "News Report"),
+        ("The strike at the auto plant enters its second week.", "News Update"),
+        ("Minimum wage debate continues in Congress.", "Political News"),
+    ]
+    for text, ctx in tests:
+        if test_post(text, ctx):
+            false_positive_count += 1
+
+    # CATEGORY 4: Artistic/Literary Expression
+    print("\n--- CATEGORY 4: ARTISTIC EXPRESSION ---")
+    print("Context: Poetry, lyrics, creative writing\n")
+
+    tests = [
+        (
+            "'The workers united will never be defeated' - protest song lyrics",
+            "Song Lyrics",
+        ),
+        (
+            "In my novel, the characters organize a strike against the factory.",
+            "Fiction Writing",
+        ),
+    ]
+    for text, ctx in tests:
+        if test_post(text, ctx):
+            false_positive_count += 1
+
+    # CATEGORY 5: Personal Experience
+    print("\n--- CATEGORY 5: PERSONAL EXPERIENCE ---")
+    print("Context: Sharing lived experiences\n")
+
+    tests = [
+        ("My grandfather was a union organizer in the 1960s.", "Family History"),
+        (
+            "I'm thinking about my wages and whether I should ask for a raise.",
+            "Personal Finance",
+        ),
+    ]
+    for text, ctx in tests:
+        if test_post(text, ctx):
+            false_positive_count += 1
+
+    # CATEGORY 6: Benign Control Group
+    print("\n--- CATEGORY 6: CONTROL (SHOULD BE ALLOWED) ---")
+    print("Context: Content with no sensitive keywords\n")
+
+    tests = [
+        ("Great weather today! Going for a hike.", "Benign"),
+        ("Just finished reading a great book.", "Benign"),
+    ]
+    for text, ctx in tests:
+        if test_post(text, ctx):
+            false_positive_count += 1
+
+    # Summary
+    print("\n" + "=" * 60)
+    print("📊 AUDIT SUMMARY")
+    print("=" * 60)
+    print(f"\n  Total False Positives Detected: {false_positive_count}")
+    print("\n  These are LEGITIMATE posts that would be SILENCED.")
+    print("  This demonstrates systemic bias against protected speech.")
+    print("\n  See FRAMEWORKS.md for official framework mapping.")
